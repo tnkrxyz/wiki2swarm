@@ -5,18 +5,25 @@ const {pipeline} = require('stream');
 const {promisify} = require('util');
 const fetch =  require('node-fetch');
 const path = require('path');
+const Downloader = require("nodejs-file-downloader");
 
 async function download({url, dir}) {
-    const streamPipeline = promisify(pipeline);
-
-    const response = await fetch(url);
-    let fileName = url.split("/").pop();
-
-    if (!response.ok) {
-        throw new Error(`unexpected response ${response.statusText}`);
-    }
-
-    await streamPipeline(response.body, createWriteStream(path.join(dir, fileName)));
+    const downloader = new Downloader({
+        url: url,
+        directory: dir,
+        onProgress: function (percentage, chunk, remainingSize) {
+          //Gets called with each chunk.
+          console.log("% ", percentage);
+          //console.log("Current chunk of data: ", chunk);
+          //console.log("Remaining bytes: ", remainingSize);
+        },
+      });
+    
+      try {
+        await downloader.download();
+      } catch (error) {
+        console.log(error);
+      }
 }
 
 async function upload(url) {
