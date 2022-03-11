@@ -5,7 +5,6 @@ const { DownloaderHelper } = require('node-downloader-helper');
 var exec = require('child-process-promise').exec;
 
 const swarm_cli = "swarm-cli"; // may include path if swarm-cli is not in the PATH
-const zimdump = "zimdump";     // may include path if zimdump is not in the PATH
 
 async function downloadZim({url, dirname}) {
     
@@ -19,7 +18,7 @@ async function downloadZim({url, dirname}) {
     return dl;
 }
 
-function _shExec(cmd) {
+function _exec(cmd) {
 
     return exec(cmd)
             .then(function (output) {
@@ -36,16 +35,16 @@ function _shExec(cmd) {
 
 async function zimdump(fileName) {
     console.log(`zimdumping ${fileName}... `);
-    let cmd = `zimdump "${fileName}"`;
+    let cmd = 'zimdump "' + fileName + '"';
 
-    return _shExec(cmd);
+    return _exec(cmd);
 }
 
 async function swarm(fileName) {
     console.log(`Uploading to Swarm ${fileName}... `);
  
-    let cmd = `${swarm_cli} upload "${fileName}"`;
-    return _shExec(cmd)
+    let cmd = swarm_cli + ' feed update "' + fileName + '"';
+    return _exec(cmd)
 }
 
 async function upload(url) {
