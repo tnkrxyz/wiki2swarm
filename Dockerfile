@@ -28,4 +28,5 @@ COPY --from=build /usr/local/bin/* /usr/local/bin/
 ENV PATH="/app/node_modules/.bin:$PATH"
 #RUN swarm-cli status
 #ENTRYPOINT ["tail"]
-#CMD ["-f","/dev/null"]
+#CMD ["tail", "-f","/dev/null"]
+CMD ["sleep", "infinity"]
