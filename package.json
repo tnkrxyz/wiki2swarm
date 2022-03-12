@@ -18,11 +18,9 @@
   },
   "homepage": "https://github.com/tnkrxyz/wiki2swarm#readme",
   "dependencies": {
+    "@ethersphere/swarm-cli": "^1.10.0",
     "child-process-promise": "^2.2.1",
     "commander": "^9.0.0",
-    "node-downloader-helper": "^2.0.1",
-    "node-fetch": "^2.6.7",
-    "node-libcurl": "^2.3.4",
-    "nodejs-file-downloader": "^4.9.3"
+    "node-downloader-helper": "^2.0.1"
   }
 }
