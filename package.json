@@ -16,10 +16,11 @@
   "bugs": {
     "url": "https://github.com/tnkrxyz/wiki2swarm/issues"
   },
-  "homepage": "https://github.com/tnkrxyz/wiki2swarm#readme",
+  "homepage": "https://github.com/tnkrxyz/wiki2swarm#README.md",
   "dependencies": {
     "@ethersphere/swarm-cli": "^1.10.0",
-    "child-process-promise": "^2.2.1",
+    "await-spawn": "^4.0.2",
+    "child_process": "^1.0.2",
     "commander": "^9.0.0",
     "node-downloader-helper": "^2.0.1"
   }

@@ -1,18 +1,39 @@
 //const Downloader = require("nodejs-file-downloader");
 const { DownloaderHelper } = require('node-downloader-helper');
-var exec = require('child-process-promise').exec;
+const {exec} = require('child_process');
+const spawn = require('await-spawn')
+const path = require("path")
+const fs = require('fs')
+
+const swarm_cli = "swarm-cli";     // may include path if swarm-cli is not in the PATH
+const zimdump_cli = "zimdump";     // may include path if zimdump is not in the PATH
 
 /*
-const swarm_cli = "swarm-cli"; // may include path if swarm-cli is not in the PATH
-const zimdump_cli = "zimdump";     // may include path if zimdump is not in the PATH
-*/
-
 const swarm_cli = "ls -la"; // may include path if swarm-cli is not in the PATH
 const zimdump_cli = "echo";     // may include path if zimdump is not in the PATH
+*/
 
-function _shExec(cmd) {
+function _spawn_io(cmd, args, options={}) {
+    child = spawn(cmd, args = args, 
+        Object.assign({ stdio: ["inherit", "inherit", "inherit"] }, options)
+        )
+    return child
 
-    return exec(cmd)
+}
+
+function _exec(cmd) {
+    return exec(cmd, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`exec error: ${error}`);
+          return;
+        }
+        if (stdout) console.log(`stdout: ${stdout}`);
+        if (stderr) console.error(`stderr: ${stderr}`);
+      })
+
+    //return exec(cmd)
+    /*
+    return (cmd)
             .then(function (output) {
                 var stdout = output.stdout;
                 var stderr = output.stderr;
@@ -22,11 +43,12 @@ function _shExec(cmd) {
             .catch(function (err) {
                 console.error('ERROR: ', err);
             });
+    */
 }
 
-async function downloadZim({url, dirname}) {
+async function downloadZim({url, datadir}) {
     
-    const dl = new DownloaderHelper(url, dirname);
+    const dl = new DownloaderHelper(url, datadir);
     
     dl
       //.on('progress', (progress) => {console.log(`${progress.progress}%`);})
@@ -36,18 +58,51 @@ async function downloadZim({url, dirname}) {
     return dl;
 }
 
-async function zimdump(fileName) {
-    console.log(`zimdumping ${fileName}... `);
-    let cmd = `${zimdump_cli} "${fileName}"`;
+async function zimdump(zimFileName) {
+    console.log(`zimdumping ${zimFileName}... `);
+    let dirName = path.join(path.dirname(zimFileName), path.parse(zimFileName).name)
 
-    return _shExec(cmd);
+    if (!fs.existsSync(dirName)){
+        fs.mkdirSync(dirName, { recursive: true });
+    }
+
+    //let cmd = `${zimdump_cli} dump --dir="${dirName}" "${zimFileName}"`;
+    //console.log(`with command ${cmd}`)
+    //return exec(cmd);
+    let args = ["dump", `--dir=${dirName}`, `${zimFileName}`]
+    return _spawn_io(zimdump_cli, args)
 }
 
-async function swarm(dirName) {
+async function process(zimFileName) {
+    console.log(`Processing dumped ${zimFileName}... `);
+
+    let dirName = path.join(path.dirname(zimFileName), path.parse(zimFileName).name)
+    
+    let indexHtml = `${dirName}/index.html`
+    //let cmd = `pwd && ls -la ${dirName}`
+    let cmd = `mv ${dirName}/A/index ${indexHtml}`
+    cmd += ` && sed -i 's|url=|url=A/|g'  ${indexHtml}`
+    cmd += ` && sed -i 's|a href=\"|a href=\"A/|g' ${indexHtml}`
+
+    return _exec(cmd)
+
+    //console.log(`with command ${cmd}... `);
+    //return exec(cmd);
+}
+
+async function swarm(zimFileName) {
+    let dirName = path.join(path.dirname(zimFileName), path.parse(zimFileName).name)
+
     console.log(`Uploading to Swarm ${dirName}... `);
  
     let cmd = `${swarm_cli} upload "${dirName}"`;
-    return _shExec(cmd)
+    //return _shExec(cmd)
+
+    //const { spawn } = require('child_process');
+    //var child = spawn(cmd, args = ["upload", `${dirName}`], { stdio: "inherit", stdin: "inherit" });
+
+    return _spawn_io(swarm_cli, args = ["upload", `${dirName}`]);
+
 }
 
-module.exports = {downloadZim, zimdump, swarm}
+module.exports = {downloadZim, zimdump, process, swarm}

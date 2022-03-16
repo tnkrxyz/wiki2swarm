@@ -18,7 +18,7 @@
     c. Find the ethereum address of your node's wallet. 
         - `docker compose logs` and the address after "using ethereum address" is the wallet address. This address is persistent with the clef-1 volume between re-creation of the docker containers.
     d. Fund your node, see [Fund Your Node section of the Swarm doc](https://docs.ethswarm.org/docs/installation/fund-your-node)
-4. Test your Bee node with swarm-cli and check if you have enough stamp postage for uploading
+4. Test your Bee node with swarm-cli and check if you have enough stamp postage for data uploading
     - If your Bee node is not on localhost or using the default ports (1633 and 1635) pass these two arguments:
         - `--BEE-API-URL http://ip-of-your-bee-node:port1 --BEE-DEBUG-API-URL http://ip-of-your-bee-node:port2`
     - `docker compose run swarm-cli status`
