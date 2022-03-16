@@ -1,6 +1,6 @@
 //const Downloader = require("nodejs-file-downloader");
 const { DownloaderHelper } = require('node-downloader-helper');
-const {exec} = require('child_process');
+//const {exec, spawn} = require('child_process');
 const spawn = require('await-spawn')
 const path = require("path")
 const fs = require('fs')
@@ -14,13 +14,13 @@ const zimdump_cli = "echo";     // may include path if zimdump is not in the PAT
 */
 
 function _spawn_io(cmd, args, options={}) {
-    child = spawn(cmd, args = args, 
+    return spawn(cmd, args = args, 
         Object.assign({ stdio: ["inherit", "inherit", "inherit"] }, options)
         )
-    return child
 
 }
 
+/*
 function _exec(cmd) {
     return exec(cmd, (error, stdout, stderr) => {
         if (error) {
@@ -32,19 +32,8 @@ function _exec(cmd) {
       })
 
     //return exec(cmd)
-    /*
-    return (cmd)
-            .then(function (output) {
-                var stdout = output.stdout;
-                var stderr = output.stderr;
-                if (stdout) console.log('stdout: ', stdout);
-                if (stderr) console.log('stderr: ', stderr);
-            })
-            .catch(function (err) {
-                console.error('ERROR: ', err);
-            });
-    */
 }
+*/
 
 async function downloadZim({url, datadir}) {
     
@@ -73,18 +62,23 @@ async function zimdump(zimFileName) {
     return _spawn_io(zimdump_cli, args)
 }
 
-async function process(zimFileName) {
+async function prepIndex(zimFileName) {
     console.log(`Processing dumped ${zimFileName}... `);
 
     let dirName = path.join(path.dirname(zimFileName), path.parse(zimFileName).name)
     
+    let indexFile = `${dirName}/A/index`
     let indexHtml = `${dirName}/index.html`
     //let cmd = `pwd && ls -la ${dirName}`
-    let cmd = `mv ${dirName}/A/index ${indexHtml}`
-    cmd += ` && sed -i 's|url=|url=A/|g'  ${indexHtml}`
-    cmd += ` && sed -i 's|a href=\"|a href=\"A/|g' ${indexHtml}`
+    //let cmd = `mv ${dirName}/A/index ${indexHtml}`
+    return [_spawn_io("mv", [indexFile, indexHtml]),
+            //cmd += ` && sed -i 's|url=|url=A/|g'  ${indexHtml}`
+            _spawn_io("sed", ["-i", 's|url=|url=A/|g', indexHtml]),
+            //cmd += ` && sed -i 's|a href=\"|a href=\"A/|g' ${indexHtml}`
+            _spawn_io("sed", ["-i", 's|a href=\"|a href=\"A/|g', indexHtml])
+    ]
 
-    return _exec(cmd)
+    //return _exec(cmd)
 
     //console.log(`with command ${cmd}... `);
     //return exec(cmd);
@@ -105,4 +99,18 @@ async function swarm(zimFileName) {
 
 }
 
-module.exports = {downloadZim, zimdump, process, swarm}
+async function cleanUp(zimFileName) {
+    let dirName = path.join(path.dirname(zimFileName), path.parse(zimFileName).name)
+
+    console.log(`Cleaning up ${zimFileName} and ${dirName}... `);
+ 
+    //let cmd = `rm ${zimFileName}`
+    return [_spawn_io("rm", [zimFileName]),
+            _spawn_io("rm", ['-rf', dirName])]
+    
+
+    //return _exec(cmd)
+
+}
+
+module.exports = {downloadZim, zimdump, prepIndex, swarm, cleanUp}

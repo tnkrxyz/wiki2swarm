@@ -1,6 +1,6 @@
-const chalk = require('chalk')
+const chalk = require('chalk');
 const path = require('path');
-const {downloadZim, zimdump, process, swarm} = require('./util')
+const {downloadZim, zimdump, prepIndex, swarm, cleanUp} = require('./util')
 //const Downloader = require("nodejs-file-downloader");
 
 async function upload(url, datadir="data/") {
@@ -13,10 +13,14 @@ async function upload(url, datadir="data/") {
     
     //var zimFileName = "data/wikipedia_en_ray_charles_mini_2022-02.zim"
     await zimdump(zimFileName);
+    //console.log(child instanceof ChildProcess)
+    //child.on('exit', () => prepIndex(zimFileName))
     
-    await process(zimFileName);
+    await prepIndex(zimFileName);
 
-    await swarm(zimFileName)
+    //await swarm(zimFileName)
+
+    cleanUp(zimFileName)
 }
 
 async function feed(url, datadir="data/") {
