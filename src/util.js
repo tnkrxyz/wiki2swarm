@@ -62,20 +62,23 @@ async function zimdump(zimFileName) {
     return _spawn_io(zimdump_cli, args)
 }
 
-async function prepIndex(zimFileName) {
+async function prepIndexDoc(zimFileName, keepAuxFiles=false) {
     console.log(`Processing dumped ${zimFileName}... `);
 
     let dirName = path.join(path.dirname(zimFileName), path.parse(zimFileName).name)
     
     let indexFile = `${dirName}/A/index`
     let indexHtml = `${dirName}/index.html`
+    let auxFiles = ["I/", "M/", "X/"].map(x => `${dirName}/x`)
     //let cmd = `pwd && ls -la ${dirName}`
     //let cmd = `mv ${dirName}/A/index ${indexHtml}`
     return [_spawn_io("mv", [indexFile, indexHtml]),
             //cmd += ` && sed -i 's|url=|url=A/|g'  ${indexHtml}`
             _spawn_io("sed", ["-i", 's|url=|url=A/|g', indexHtml]),
             //cmd += ` && sed -i 's|a href=\"|a href=\"A/|g' ${indexHtml}`
-            _spawn_io("sed", ["-i", 's|a href=\"|a href=\"A/|g', indexHtml])
+            _spawn_io("sed", ["-i", 's|a href=\"|a href=\"A/|g', indexHtml]
+            (keepAuxFiles) ? '' : _spawn_io("rm", ["-rf", ] + auxFiles)
+            )
     ]
 
     //return _exec(cmd)
@@ -113,4 +116,4 @@ async function cleanUp(zimFileName) {
 
 }
 
-module.exports = {downloadZim, zimdump, prepIndex, swarm, cleanUp}
+module.exports = {downloadZim, zimdump, prepIndex: prepIndexDoc, swarm, cleanUp}
