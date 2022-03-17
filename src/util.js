@@ -35,12 +35,12 @@ function _exec(cmd) {
 }
 */
 
-async function downloadZim({url, datadir}) {
-    
-    const dl = new DownloaderHelper(url, datadir);
+async function downloadZim(args={}) {
+    console.log(`downloadZim called with ${args.url} and ${args.datadir}`)
+    const dl = new DownloaderHelper(args.url, args.datadir);
     
     dl
-      //.on('progress', (progress) => {console.log(`${progress.progress}%`);})
+      .on('progress', (progress) => {console.log(`${progress.progress}%`);})
       .on('error', (err) => console.log('Download Error: ', err))
       .on('end', (info) => {console.log('Download Completed'); info = info;})
     
