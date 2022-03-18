@@ -4,8 +4,21 @@ const {downloadZim, zimdump, prepIndexDoc, swarm, cleanUp} = require('./util')
 //const Downloader = require("nodejs-file-downloader");
 const Queue = require('bee-queue');
 
+const TIMEOUT = 10 * 1000;  //mseconds
 const jobQueue = new Queue('job');
 const jobSeq = {0: downloadZim, 1: zimdump, 2: prepIndexDoc, 3: swarm, 4: cleanUp}
+
+async function closeIdleQueue(queue) {
+    queue
+    .getJobs('active', {size: 100})
+    .then((jobs) => {
+        //console.log(jobs);
+        if (jobs.length == 0) {
+            setTimeout(async () => queue.close(TIMEOUT), TIMEOUT);
+            console.log(`No active jobs left in the queue; Shutting down job queue in ${TIMEOUT/1000} seconds.`);
+        }
+    })
+}
 
 async function upload(url, datadir="data/") {
     //let vv = jobSeq.map(async (fn) => {jobQueue.createJob({fn: fn, url: url, datadir: datadir}).save()})
@@ -27,7 +40,9 @@ async function upload(url, datadir="data/") {
         console.log(`Completed job seq ${job.data.seqId}`);
         //console.log(result);
         if (job.data.seqId == Math.max(...Object.keys(jobSeq))) {
-            // at the end of sequence of jobs
+            // at the end of job sequence
+            // close queue if there are no more active jobs
+            closeIdleQueue(jobQueue)
             return
         }
         job.data.seqId += 1
@@ -45,6 +60,7 @@ async function upload(url, datadir="data/") {
     jobQueue.on('failed', (job, err) => {
         console.log(`Job ${job.id} failed with error:`);
         console.error(err)
+        closeIdleQueue(jobQueue)
     });
 }
 

@@ -1,53 +1,78 @@
 # A nodejs package to mirror wikimedia snapshot to Swarm
 
+## Features
+- Support asynchronous job queue with [`bee-queue`]()
+- Utilize the [`swarm-cli` package]() for interactions with bee node
+- Command line arguments or a configure file your preference, your choice
+
 ## Prerequisites
 - docker 
 - docker compose
-- A Bee node (already running or set up one inside a docker container following step 3 below)
+- A running Bee node (or set one up inside a docker container following step 3 below)
 
 ## Instructions
 1. Clone this repo: `git clone https://github.com/tnkrxyz/wiki2swarm.git` and change path to the the wiki2swarm dirctory in your terminal
-2. Build the docker image with command `docker compose build wiki2swarm`
-3. Run a local Bee node with Bee Clef inside a container (Skip this step if you have a bee node running already)
-    a. Required minimal configuratoin in env_minimal, edit & rename it to `.env`
-        - Required minimal setup ():
-            - edit .env with
-                - Enable DEBUG_API
-        - More details & explanation: https://docs.ethswarm.org/docs/installation/docker#docker-compose
-    b. `docker compose up -d`
-    c. Find the ethereum address of your node's wallet. 
-        - `docker compose logs` and the address after "using ethereum address" is the wallet address. This address is persistent with the clef-1 volume between re-creation of the docker containers.
-    d. Fund your node, see [Fund Your Node section of the Swarm doc](https://docs.ethswarm.org/docs/installation/fund-your-node)
-4. Test your Bee node with swarm-cli and check if you have enough stamp postage for data uploading
-    - If your Bee node is not on localhost or using the default ports (1633 and 1635) pass these two arguments:
-        - `--BEE-API-URL http://ip-of-your-bee-node:port1 --BEE-DEBUG-API-URL http://ip-of-your-bee-node:port2`
-    - `docker compose run swarm-cli status`
-    - `docker compose run swarm-cli stamp list`
-    - buy more stamps if necessary `swarm-cli stamp buy --depth 17 --amount 1000`
-    
+2. Build the docker image with command `docker compose build app`
+3. (optional) Run a local Bee node with Bee Clef inside a container (Skip this step if you have a running bee node  already or use one of the swarm testing gateways)
+4. Check the status of your Bee node with swarm-cli and if you have enough stamp postage for file uploading
+    - If your Bee node is not on localhost or using the default ports (1633 and 1635) pass this  argument: `--bee-api-url http://ip-of-your-bee-node:port1`. For example, to use the Swarm public testing gateway, `--bee-api-url https://gateway-proxy-bee-0-0.gateway.ethswarm.org` 
+    ```
+    docker compose exec app swarm-cli status
+    docker compose exec app swarm-cli stamp list
+    docker compose exec app swarm-cli stamp buy --depth 20 --amount 100000
+    ```
+
 5. Use wiki2swarm to mirror wikimedia snapshots
-    - `docker compose run wiki2swarm upload <url>`
-    - `docker compose run wiki2swarm feed <url>`
+    - `docker compose exec app wiki2swarm upload <url>`
+    - `docker compose exec app wiki2swarm upload --feed <url>`
         - the Swarm hash remains the same for the same file
         - requires creation of an identity & using a password
     - By default, both commands require selection of stamp during runtime. If you want to bypass this interactive confirmation, pass a `--stamp <stamp id>` argument
+    - Additional arguments or use a config.json file
+        - stamp
+        - bee-api-url
+        - bee-debug-api-url
+        - identity (for feed only)
+        - password (for feed only)
+        - pin
 
-## Test your setup with the goerli testnet
-- Rename `env_goerli` to `.env` and add these settings
-    - infura/getblock
-- Start the Bee node
-    - `docker compose up -d`
-- Find the ethereum address of your node and fund your node
-    - Find the ethereum address
-    - Get a cheque from the Swarm discord faucet
-    - Withdraw cheque into gBZZ/gETH: `cheque withdraw 2500000000000000`
+## Set up a local Bee node and test your setup with the goerli testnet
+- Run a local Bee node inside a container
+    a. In your terminal, change path to `beenode/`
+    a. Required minimal configuratoin in env_minimal, rename it to `.env` and fill in below
+        - Required minimal setup ():
+            - edit .env with
+        - 
+        - More details & explanation: https://docs.ethswarm.org/docs/installation/docker#docker-compose
+    b. Start the Bee node with `docker compose up -d`
+    c. Find the ethereum address of your node's wallet. 
+        - `docker compose logs` and the address after "using ethereum address" is the wallet address. This address is persistent with the clef-1 volume between re-creation of the docker containers.
+    d. Fund your node, see [Fund Your Node section of the Swarm doc](https://docs.ethswarm.org/docs/installation/fund-your-node)
+
+- Set up local bee node on the goerli testnet
+    1. Rename `env_goerli` to `.env` and add these settings
+        - infura/getblock
+    2. Start the Bee node with 
+        ```
+        cd beenode
+        docker compose up -d
+        ```
+    3. Find the ethereum address of your node and fund your node
+        - Find the ethereum address from the output of `docker compose logs`
+        - Get a cheque from the Swarm discord faucet
+    4. Change path to the `wiki2swarm` directory Start a wiki2swarm container 
+        ```
+        cd ..
+        docker compose up -d
+        ```
+    5. 
     - buy stamp `stamp buy --depth 17 --amount 1000`
-    - check stamp `stamp list` & `stamp show`
-- upload zim files
-    - `wiki2swarm upload <zim url> --stamp <stamp id>`
+        - check stamp `stamp list` & `stamp show`
+    - upload zim files
+        - `wiki2swarm upload <zim url> --stamp <stamp id>`
 
 ## Use System environment and swarm-cli config
-To avoid passing the same command line arguments over & over, it is easier to either system environment (by adding them to the .env file) or use the swarm-cli config file
+To avoid passing the same command line arguments over and over, it is easier to either system environment (by adding them to the .env file) or use the swarm-cli config file
 
 - System Environment These are the system environment that can be added to `.env`
     - BEE_API_URL=http://ip-of-the-node:1633

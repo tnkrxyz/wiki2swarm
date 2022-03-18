@@ -61,10 +61,16 @@ async function prepIndexDoc(args={}) {
     let indexFile = `${dirName}/A/index`
     let indexHtml = `${dirName}/index.html`
 
-    //let cmdArgs = ["dump", `--dir=${dirName}`, `${zimFileName}`]
+    // rename A/index -> index.html
     await _spawn_io("mv", [indexFile, indexHtml])
+    // fix url & href relative to index.html
     await _spawn_io("sed", ["-i", 's|url=|url=A/|g', indexHtml])
     await _spawn_io("sed", ["-i", 's|a href=\"|a href=\"A/|g', indexHtml])
+
+    // swarm doesn't like the directory "-", which contains js
+    // rename "-"" -> js
+    await _spawn_io("mv", [`${dirName}/-`, `${dirName}/js`])
+    await _spawn_io("find", [dirName, "-type", "f", "-exec", "sed", "-i", "s|/-/|/js/|g", "{}", "\;"])
 
     let auxFiles = ["I/", "M/", "X/"].map(x => `${dirName}/${x}`)
     //console.log(["-rf"].concat(auxFiles));
@@ -80,8 +86,14 @@ async function swarm(args={}) {
     let dirName = getDirName(zimFileName)
 
     console.log(`Uploading to Swarm ${dirName}... `);
- 
-    await _spawn_io(swarm_cli, args = ["upload", dirName])
+
+    if (args.feed) {
+        let baseFileName = path.parse(zimFileName).name
+        let topic = baseFileName.replace(/[\d,\s\(\)-_]*$/, '').replaceAll(/_/g, " ")
+        await _spawn_io(swarm_cli, args = ["feed", "upload", dirName])
+    } else {
+        await _spawn_io(swarm_cli, args = ["upload", dirName])
+    }
 
     return {}
 }

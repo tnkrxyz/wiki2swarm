@@ -8,9 +8,4 @@ program
     .description('Upload the zim file in the specified url')
     .action(upload);
 
-program
-    .command('feed <url> [options]')
-    .description('Feed upload/update the zim file in the specified url')
-    .action(feed);
-
 program.parse();
