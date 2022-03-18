@@ -15,9 +15,9 @@ program
     .option('-v, --verbose', 'Print all console messages', false)
     .option('--bee-api-url <url>', 'Bee API URL (arugment passing to swarm-cli)')
     .option('--bee-debug-api-url <url>', 'Bee Debug API URL (arugment passing to swarm-cli)')
-    .option('--stamp', 'id of stamp postage to use (arugment passing to swarm-cli)')
-    .option('--identity', 'identity (for "feed upload", arugment passing to swarm-cli)')
-    .option('--password', 'password for using identity (for "fee upload", arugment passing to swarm-cli)')
+    .option('--stamp <stamp>', 'id of stamp postage to use (arugment passing to swarm-cli)')
+    .option('--identity <identity>', 'identity to use for "feed upload" (arugment passing to swarm-cli)')
+    .option('--password <password>', 'password for using identity for "fee upload" (arugment passing to swarm-cli)')
     //.argument('[swarmOptions]', 'additional options passing to swarm-cli')
     .action(mirror);
 

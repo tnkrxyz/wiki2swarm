@@ -1,28 +1,26 @@
-const chalk = require('chalk');
 const path = require('path');
 const {downloadZim, zimdump, prepIndexDoc: prepFiles, swarm, cleanUp} = require('./util')
 //const Downloader = require("nodejs-file-downloader");
 const Queue = require('bee-queue');
 
-const TIMEOUT = 10 * 1000;  //mseconds
+const TIMEOUT = 3 * 1000;  //mseconds
 const jobQueue = new Queue('job');
 const jobSeq = {0: downloadZim, 1: zimdump, 2: prepFiles, 3: swarm, 4: cleanUp}
 
-async function closeIdleQueue(queue) {
+async function closeIdleQueue(queue, verbose=false) {
     queue
     .getJobs('active', {size: 100})
     .then((jobs) => {
         //console.log(jobs);
         if (jobs.length == 0) {
             setTimeout(async () => queue.close(TIMEOUT), TIMEOUT);
-            console.log(`No active jobs left in the queue; Shutting down job queue in ${TIMEOUT/1000} seconds.`);
+            if (verbose) console.log(`No active jobs left in the queue; Shutting down job queue in ${TIMEOUT/1000} seconds.`);
         }
     })
 }
 
 async function mirror(urls, args) {
-    console.log(args)
-    
+       
     let url = urls[0]
     let datadir = args.datadir
 
@@ -34,8 +32,7 @@ async function mirror(urls, args) {
     jobQueue.createJob({...args, ...{seqId: 0, url: url}}).save()
 
     jobQueue.process(async (job, done) => {
-        console.log(`Processing job ${job.id}:`);
-        console.log(job.data);
+        if (args.verbose) console.log(`Processing job ${job.id} with arguments:\n ${job.data}`);
         let fn = jobSeq[job.data.seqId]
         let ret = fn(args=job.data)
 
@@ -44,12 +41,12 @@ async function mirror(urls, args) {
     });
 
     jobQueue.on('succeeded', (job, result) => {
-        console.log(`Completed job seq ${job.data.seqId}`);
+        if (args.verbose) console.log(`Job ${job.id} completed`);
         //console.log(result);
         if (job.data.seqId == Math.max(...Object.keys(jobSeq))) {
             // at the end of job sequence
             // close queue if there are no more active jobs
-            closeIdleQueue(jobQueue)
+            closeIdleQueue(jobQueue, verbose=args.verbose)
             return
         }
         job.data.seqId += 1
@@ -67,7 +64,7 @@ async function mirror(urls, args) {
     jobQueue.on('failed', (job, err) => {
         console.log(`Job ${job.id} failed with error:`);
         console.error(err)
-        closeIdleQueue(jobQueue)
+        closeIdleQueue(jobQueue, verbose=args.verbose)
     });
 }
 

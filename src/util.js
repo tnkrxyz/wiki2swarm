@@ -1,4 +1,5 @@
 //const Downloader = require("nodejs-file-downloader");
+const chalk = require('chalk');
 const { DownloaderHelper } = require('node-downloader-helper');
 //const {exec, spawn} = require('child_process');
 const spawn = require('await-spawn')
@@ -16,7 +17,6 @@ async function _spawn_io(cmd, args, options={}) {
     return spawn(cmd, args = args, 
         Object.assign({ stdio: ["inherit", "inherit", "inherit"] }, options)
         )
-
 }
 
 async function processURL(args={}) {
@@ -32,7 +32,7 @@ async function downloadZim(args={}) {
     dl
       .on('progress', (progress) => {if (args.verbose) console.log(`${args.url}: ${Math.round(progress.progress)}%`);})
       .on('error', (err) => console.log('Download Error: ', err))
-      .on('end', (info) => {console.log('Download Completed'); info = info;})
+      .on('end', (info) => {if (args.verbose) console.log('Download Completed'); info = info;})
     
     await dl.start();
 
@@ -75,7 +75,6 @@ async function prepFiles(args={}) {
     await _spawn_io("sed", ["-i", 's|url=|url=A/|g', indexHtml])
     await _spawn_io("sed", ["-i", 's|a href=\"|a href=\"A/|g', indexHtml])
 
-    console.log(`Renaming super long filename`);
     // swarm doesn't like super long filename
     // rename "-/mw/skins.minerva.base.reset|skins.minerva.content.styles|ext.cite.style|site.styles|mobile.app.pagestyles.android|mediawiki.page.gallery.styles|mediawiki.skinning.content.parsoid.css" -> skins.css
     //await _spawn_io("ls", ["-la", `${dirName}/`])
@@ -93,26 +92,23 @@ async function prepFiles(args={}) {
 }
 
 async function swarm(args={}) {
-    console.log(args);
     let zimFileName = args.zimFileName
     let dirName = getDirName(zimFileName)
 
     if (args.verbose) console.log(`Uploading ${dirName} to Swarm ... `);
     
     let cmdArgs = []
-    if (args.beeApiUrl) {
-        cmdArgs.push('--bee-api-url', args.beeApiUrl)
-    }
+    if (args.beeApiUrl) cmdArgs.push('--bee-api-url', args.beeApiUrl)
     if (args.beeDebugApiUrl) cmdArgs.push('--bee-debug-api-url', args.beeDebugApiUrl)
     if (args.stamp) cmdArgs.push('--stamp', args.stamp)
 
-    console.log(args.url)
+    console.log(chalk.bold.yellow("Wiki Snapshot URL: ") + args.url)
     if (args.feed) {
         let baseFileName = path.parse(zimFileName).name
         let topic = baseFileName.replace(/[\d,\s\(\)-_]*$/, '').replaceAll(/_/g, " ")
-        if (args.identify) cmdArgs.push('--identity', args.identity)
+        if (args.identity) cmdArgs.push('--identity', args.identity)
         if (args.password) cmdArgs.push('--password', args.password)  
-        cmdArgs = ["feed", "upload", dirName, '--topic', topic].concat(cmdArgs)
+        cmdArgs = ["feed", "upload", dirName, '--topic-string', topic].concat(cmdArgs)
         if (args.verbose) console.log(`Calling ${swarm_cli} ${cmdArgs.join(' ')}`);
         await _spawn_io(swarm_cli, args = cmdArgs)
     } else {
