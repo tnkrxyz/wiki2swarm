@@ -8,32 +8,16 @@ const fs = require('fs')
 const swarm_cli = "swarm-cli";     // may include path if swarm-cli is not in the PATH
 const zimdump_cli = "zimdump";     // may include path if zimdump is not in the PATH
 
-/*
-const swarm_cli = "ls -la"; // may include path if swarm-cli is not in the PATH
-const zimdump_cli = "echo";     // may include path if zimdump is not in the PATH
-*/
+function getDirName(zimFileName) {
+    return path.join(path.dirname(zimFileName), path.parse(zimFileName).name)
+}
 
-function _spawn_io(cmd, args, options={}) {
+async function _spawn_io(cmd, args, options={}) {
     return spawn(cmd, args = args, 
         Object.assign({ stdio: ["inherit", "inherit", "inherit"] }, options)
         )
 
 }
-
-/*
-function _exec(cmd) {
-    return exec(cmd, (error, stdout, stderr) => {
-        if (error) {
-          console.error(`exec error: ${error}`);
-          return;
-        }
-        if (stdout) console.log(`stdout: ${stdout}`);
-        if (stderr) console.error(`stderr: ${stderr}`);
-      })
-
-    //return exec(cmd)
-}
-*/
 
 async function downloadZim(args={}) {
     console.log(`downloadZim called with ${args.url} and ${args.datadir}`)
@@ -44,12 +28,15 @@ async function downloadZim(args={}) {
       .on('error', (err) => console.log('Download Error: ', err))
       .on('end', (info) => {console.log('Download Completed'); info = info;})
     
-    return dl;
+    await dl.start();
+
+    return {zimFileName: dl.getDownloadPath()}
 }
 
-async function zimdump(zimFileName) {
+async function zimdump(args={}) {
+    let zimFileName = args.zimFileName
     console.log(`zimdumping ${zimFileName}... `);
-    let dirName = path.join(path.dirname(zimFileName), path.parse(zimFileName).name)
+    let dirName = getDirName(zimFileName)
 
     if (!fs.existsSync(dirName)){
         fs.mkdirSync(dirName, { recursive: true });
@@ -58,62 +45,58 @@ async function zimdump(zimFileName) {
     //let cmd = `${zimdump_cli} dump --dir="${dirName}" "${zimFileName}"`;
     //console.log(`with command ${cmd}`)
     //return exec(cmd);
-    let args = ["dump", `--dir=${dirName}`, `${zimFileName}`]
-    return _spawn_io(zimdump_cli, args)
+    let cmdArgs = ["dump", `--dir=${dirName}`, zimFileName]
+    
+    await _spawn_io(zimdump_cli, cmdArgs)
+
+    return {}
 }
 
-async function prepIndexDoc(zimFileName, keepAuxFiles=false) {
+async function prepIndexDoc(args={}) {
+    let zimFileName = args.zimFileName
     console.log(`Processing dumped ${zimFileName}... `);
-
-    let dirName = path.join(path.dirname(zimFileName), path.parse(zimFileName).name)
     
+    let dirName = getDirName(zimFileName)
+
     let indexFile = `${dirName}/A/index`
     let indexHtml = `${dirName}/index.html`
-    let auxFiles = ["I/", "M/", "X/"].map(x => `${dirName}/x`)
-    //let cmd = `pwd && ls -la ${dirName}`
-    //let cmd = `mv ${dirName}/A/index ${indexHtml}`
-    return [_spawn_io("mv", [indexFile, indexHtml]),
-            //cmd += ` && sed -i 's|url=|url=A/|g'  ${indexHtml}`
-            _spawn_io("sed", ["-i", 's|url=|url=A/|g', indexHtml]),
-            //cmd += ` && sed -i 's|a href=\"|a href=\"A/|g' ${indexHtml}`
-            _spawn_io("sed", ["-i", 's|a href=\"|a href=\"A/|g', indexHtml]
-            (keepAuxFiles) ? '' : _spawn_io("rm", ["-rf", ] + auxFiles)
-            )
-    ]
 
-    //return _exec(cmd)
+    //let cmdArgs = ["dump", `--dir=${dirName}`, `${zimFileName}`]
+    await _spawn_io("mv", [indexFile, indexHtml])
+    await _spawn_io("sed", ["-i", 's|url=|url=A/|g', indexHtml])
+    await _spawn_io("sed", ["-i", 's|a href=\"|a href=\"A/|g', indexHtml])
 
-    //console.log(`with command ${cmd}... `);
-    //return exec(cmd);
+    let auxFiles = ["I/", "M/", "X/"].map(x => `${dirName}/${x}`)
+    //console.log(["-rf"].concat(auxFiles));
+    if (!args.keepAuxFiles)
+        await _spawn_io("rm", ["-rf"].concat(auxFiles))
+    //await _spawn_io(zimdump_cli, cmdArgs)
+
+    return {}
 }
 
-async function swarm(zimFileName) {
-    let dirName = path.join(path.dirname(zimFileName), path.parse(zimFileName).name)
+async function swarm(args={}) {
+    let zimFileName = args.zimFileName
+    let dirName = getDirName(zimFileName)
 
     console.log(`Uploading to Swarm ${dirName}... `);
  
-    let cmd = `${swarm_cli} upload "${dirName}"`;
-    //return _shExec(cmd)
+    await _spawn_io(swarm_cli, args = ["upload", dirName])
 
-    //const { spawn } = require('child_process');
-    //var child = spawn(cmd, args = ["upload", `${dirName}`], { stdio: "inherit", stdin: "inherit" });
-
-    return _spawn_io(swarm_cli, args = ["upload", `${dirName}`]);
-
+    return {}
 }
 
-async function cleanUp(zimFileName) {
-    let dirName = path.join(path.dirname(zimFileName), path.parse(zimFileName).name)
+async function cleanUp(args={}) {
+    let zimFileName = args.zimFileName
+    let dirName = getDirName(zimFileName)
 
     console.log(`Cleaning up ${zimFileName} and ${dirName}... `);
  
     //let cmd = `rm ${zimFileName}`
-    return [_spawn_io("rm", [zimFileName]),
-            _spawn_io("rm", ['-rf', dirName])]
+    await _spawn_io("rm", [zimFileName])
+    await _spawn_io("rm", ['-rf', dirName])
     
-
-    //return _exec(cmd)
-
+    return {}
 }
 
-module.exports = {downloadZim, zimdump, prepIndex: prepIndexDoc, swarm, cleanUp}
+module.exports = {downloadZim, zimdump, prepIndexDoc, swarm, cleanUp}

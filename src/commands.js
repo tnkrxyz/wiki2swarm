@@ -4,94 +4,48 @@ const {downloadZim, zimdump, prepIndexDoc, swarm, cleanUp} = require('./util')
 //const Downloader = require("nodejs-file-downloader");
 const Queue = require('bee-queue');
 
-const downloadQueue = new Queue('download');
-const zimdumpQueue = new Queue('zimdump');
-const prepIndexDocQueue = new Queue('prepIndexDoc');
-const swarmQueue = new Queue('swarm');
-const cleanUpQueue = new Queue('cleanUp');
-
-function doSth(args) {
-    console.log(args.url)
-    console.log(args.datadir)
-}
+const jobQueue = new Queue('job');
+const jobSeq = {0: downloadZim, 1: zimdump, 2: prepIndexDoc, 3: swarm, 4: cleanUp}
 
 async function upload(url, datadir="data/") {
-    //console.log(`Mirroring/uploading ${url} to Swarm ... `);
-    downloadQueue
-        .createJob({url:url, datadir:datadir})
-        .save();
+    //let vv = jobSeq.map(async (fn) => {jobQueue.createJob({fn: fn, url: url, datadir: datadir}).save()})
+    //console.log(vv)
 
-    downloadQueue.on('succeeded', (job, result) => {
-        console.log(`Download completed job ${job.id}:`);
-        console.log(result);
-        zimdumpQueue
-            .createJob(Object.assign(job.data, {zimFileName: result}))
-            .save()
-    });
-    /*
-    zimdumpQueue.on('succeeded', (job, result) => {
-        console.log(`zimdump completed job ${job.id}: ${result}`);
-        prepIndexDocQueue
-            .createJob({parent: job.data, result, keepAuxFiles})
-            .save()
-    });
+    jobQueue.createJob({seqId: 0, url: url, datadir: datadir}).save()
 
-    prepIndexDocQueue.on('succeeded', (job, result) => {
-        console.log(`zimdump completed job ${job.id}: ${result}`);
-        swarmQueue
-            .createJob({parent: job.data, result})
-            .save()
-    });
-
-    swarmQueue.on('succeeded', (job, result) => {
-        console.log(`zimdump completed job ${job.id}: ${result}`);
-        cleanUpQueue
-            .createJob({parent: job.data, result})
-            .save()
-    });
-    */
-
-    //downloadQueue.process(doSth)
-     downloadQueue.process(async (job, done) => {
-        let dl = await downloadZim(job.data)
-        await dl.start()
-        let zimFileName = dl.getDownloadPath();
-        console.log(zimFileName);
-        //done()
-        return zimFileName
-    });
-
-    zimdumpQueue.process(async (job, done) => {
-        console.log(`Processing job ${job.id}`);
+    jobQueue.process(async (job, done) => {
+        console.log(`Processing job ${job.id}:`);
         console.log(job.data);
-        let dl = await zimdump(job.data.zimFileName)
-        await dl.start()
-        let zimFileName = dl.getDownloadPath();
+        let fn = jobSeq[job.data.seqId]
+        let ret = fn(args=job.data)
 
-        return done(null, zimFileName);
+        return ret
+        
     });
 
-    prepIndexDocQueue.process(async (job, done) => {
-        console.log(`Processing job ${job.id}`);
-        await prepIndexDoc(job.data.url, job.data.datadir, keepAuxFiles=false)
-
-        return done(null, job.data.zimFileName);
+    jobQueue.on('succeeded', (job, result) => {
+        console.log(`Completed job seq ${job.data.seqId}`);
+        //console.log(result);
+        if (job.data.seqId == Math.max(...Object.keys(jobSeq))) {
+            // at the end of sequence of jobs
+            return
+        }
+        job.data.seqId += 1
+        job.data = {...job.data, ...result}
+        jobQueue.createJob(job.data).save()
+        //console.log('Next job queued:');
+        //console.log(job.data);
     });
 
-    swarmQueue.process(async (job, done) => {
-        console.log(`Processing job ${job.id}`);
-        await swarm(job.data.zimFileName)
-
-        return done(null, job.data.zimFileName);
+    jobQueue.on('error', (err) => {
+        console.log('A queue error happened:');
+        console.error(err)
     });
 
-    cleanUpQueue.process(async (job, done) => {
-        console.log(`Processing job ${job.id}`);
-        await cleanUp(job.data.zimFileName)
-
-        return done(null, job.data.zimFileName);
+    jobQueue.on('failed', (job, err) => {
+        console.log(`Job ${job.id} failed with error:`);
+        console.error(err)
     });
-
 }
 
 async function feed(url, datadir="data/") {
