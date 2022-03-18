@@ -1,11 +1,24 @@
 #! /usr/bin/env node
 
 const program = require('commander')
-const {upload, feed} = require('./commands')
+const {mirror, feed} = require('./commands')
 
 program
-    .command('upload <url> [options]')
-    .description('Upload the zim file in the specified url')
-    .action(upload);
+    //.command('mirror <url> [options]')
+    .name("wiki2swarm")
+    .description('Mirror Wikipedia snapshot in zim format to Swarm')
+    .argument('<url...>', 'zim url(s) to be mirrored to Swarm')
+    .option('-d, --datadir', 'directory to store zim and temporary files"', 'data/')
+    .option('-f, --feed', 'Use "feed upload" instead of "upload"', false)
+    .option('-k, --keep-aux-files', 'keep auxillary files (jpg, media, tag, and search index)', false)
+    .option('-c, --cleanup', 'Clean up downloaded and extracted files after uploading', true)
+    .option('-v, --verbose', 'Print all console messages', false)
+    .option('--bee-api-url <url>', 'Bee API URL (arugment passing to swarm-cli)')
+    .option('--bee-debug-api-url <url>', 'Bee Debug API URL (arugment passing to swarm-cli)')
+    .option('--stamp', 'id of stamp postage to use (arugment passing to swarm-cli)')
+    .option('--identity', 'identity (for "feed upload", arugment passing to swarm-cli)')
+    .option('--password', 'password for using identity (for "fee upload", arugment passing to swarm-cli)')
+    //.argument('[swarmOptions]', 'additional options passing to swarm-cli')
+    .action(mirror);
 
 program.parse();

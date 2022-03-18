@@ -1,12 +1,12 @@
 const chalk = require('chalk');
 const path = require('path');
-const {downloadZim, zimdump, prepIndexDoc, swarm, cleanUp} = require('./util')
+const {downloadZim, zimdump, prepIndexDoc: prepFiles, swarm, cleanUp} = require('./util')
 //const Downloader = require("nodejs-file-downloader");
 const Queue = require('bee-queue');
 
 const TIMEOUT = 10 * 1000;  //mseconds
 const jobQueue = new Queue('job');
-const jobSeq = {0: downloadZim, 1: zimdump, 2: prepIndexDoc, 3: swarm, 4: cleanUp}
+const jobSeq = {0: downloadZim, 1: zimdump, 2: prepFiles, 3: swarm, 4: cleanUp}
 
 async function closeIdleQueue(queue) {
     queue
@@ -20,11 +20,18 @@ async function closeIdleQueue(queue) {
     })
 }
 
-async function upload(url, datadir="data/") {
+async function mirror(urls, args) {
+    console.log(args)
+    
+    let url = urls[0]
+    let datadir = args.datadir
+
+    //let url = args.url
+    //let datadir = args.datadir
     //let vv = jobSeq.map(async (fn) => {jobQueue.createJob({fn: fn, url: url, datadir: datadir}).save()})
     //console.log(vv)
 
-    jobQueue.createJob({seqId: 0, url: url, datadir: datadir}).save()
+    jobQueue.createJob({...args, ...{seqId: 0, url: url}}).save()
 
     jobQueue.process(async (job, done) => {
         console.log(`Processing job ${job.id}:`);
@@ -76,4 +83,4 @@ async function feed(url, datadir="data/") {
     await swarm(zimFileName, datadir="data/")
 }
 
-module.exports = {upload, feed}
+module.exports = {mirror, feed}

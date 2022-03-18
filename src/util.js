@@ -19,12 +19,18 @@ async function _spawn_io(cmd, args, options={}) {
 
 }
 
+async function processURL(args={}) {
+    if (args.verbose) console.log(`Processing URL ${args.url}`)
+}
+
 async function downloadZim(args={}) {
-    console.log(`downloadZim called with ${args.url} and ${args.datadir}`)
-    const dl = new DownloaderHelper(args.url, args.datadir);
+    if (args.verbose) console.log(`Downloading zim file at ${args.url} to ${args.datadir}`)
+    const dl = new DownloaderHelper(args.url, args.datadir, 
+                                    {override:true}
+                                    );
     
     dl
-      .on('progress', (progress) => {console.log(`${progress.progress}%`);})
+      .on('progress', (progress) => {if (args.verbose) console.log(`${args.url}: ${Math.round(progress.progress)}%`);})
       .on('error', (err) => console.log('Download Error: ', err))
       .on('end', (info) => {console.log('Download Completed'); info = info;})
     
@@ -34,13 +40,15 @@ async function downloadZim(args={}) {
 }
 
 async function zimdump(args={}) {
+    
     let zimFileName = args.zimFileName
-    console.log(`zimdumping ${zimFileName}... `);
+    if (args.verbose) console.log(`zimdumping ${zimFileName}... `);
     let dirName = getDirName(zimFileName)
 
-    if (!fs.existsSync(dirName)){
-        fs.mkdirSync(dirName, { recursive: true });
+    if (fs.existsSync(dirName)){
+        fs.rmSync(dirName, { recursive: true, force: true });
     }
+    fs.mkdirSync(dirName, { recursive: true });
 
     //let cmd = `${zimdump_cli} dump --dir="${dirName}" "${zimFileName}"`;
     //console.log(`with command ${cmd}`)
@@ -52,9 +60,9 @@ async function zimdump(args={}) {
     return {}
 }
 
-async function prepIndexDoc(args={}) {
+async function prepFiles(args={}) {
     let zimFileName = args.zimFileName
-    console.log(`Processing dumped ${zimFileName}... `);
+    if (args.verbose) console.log(`Prepare files ${zimFileName} for uploading ... `);
     
     let dirName = getDirName(zimFileName)
 
@@ -67,10 +75,13 @@ async function prepIndexDoc(args={}) {
     await _spawn_io("sed", ["-i", 's|url=|url=A/|g', indexHtml])
     await _spawn_io("sed", ["-i", 's|a href=\"|a href=\"A/|g', indexHtml])
 
-    // swarm doesn't like the directory "-", which contains js
-    // rename "-"" -> js
-    await _spawn_io("mv", [`${dirName}/-`, `${dirName}/js`])
-    await _spawn_io("find", [dirName, "-type", "f", "-exec", "sed", "-i", "s|/-/|/js/|g", "{}", "\;"])
+    console.log(`Renaming super long filename`);
+    // swarm doesn't like super long filename
+    // rename "-/mw/skins.minerva.base.reset|skins.minerva.content.styles|ext.cite.style|site.styles|mobile.app.pagestyles.android|mediawiki.page.gallery.styles|mediawiki.skinning.content.parsoid.css" -> skins.css
+    //await _spawn_io("ls", ["-la", `${dirName}/`])
+    //await _spawn_io("ls", ["-la", `${dirName}/-/mw/skins*`], { shell: true })
+    await _spawn_io("mv", [`${dirName}/-/mw/skins*`, `${dirName}/-/mw/skins.css`], { shell: true })
+    await _spawn_io("find", [dirName, "-type", "f", "-exec", "sed", "-i", "s/skins.*\.css/skins.css/g", "{}", "\;"])
 
     let auxFiles = ["I/", "M/", "X/"].map(x => `${dirName}/${x}`)
     //console.log(["-rf"].concat(auxFiles));
@@ -82,33 +93,50 @@ async function prepIndexDoc(args={}) {
 }
 
 async function swarm(args={}) {
+    console.log(args);
     let zimFileName = args.zimFileName
     let dirName = getDirName(zimFileName)
 
-    console.log(`Uploading to Swarm ${dirName}... `);
+    if (args.verbose) console.log(`Uploading ${dirName} to Swarm ... `);
+    
+    let cmdArgs = []
+    if (args.beeApiUrl) {
+        cmdArgs.push('--bee-api-url', args.beeApiUrl)
+    }
+    if (args.beeDebugApiUrl) cmdArgs.push('--bee-debug-api-url', args.beeDebugApiUrl)
+    if (args.stamp) cmdArgs.push('--stamp', args.stamp)
 
+    console.log(args.url)
     if (args.feed) {
         let baseFileName = path.parse(zimFileName).name
         let topic = baseFileName.replace(/[\d,\s\(\)-_]*$/, '').replaceAll(/_/g, " ")
-        await _spawn_io(swarm_cli, args = ["feed", "upload", dirName])
+        if (args.identify) cmdArgs.push('--identity', args.identity)
+        if (args.password) cmdArgs.push('--password', args.password)  
+        cmdArgs = ["feed", "upload", dirName, '--topic', topic].concat(cmdArgs)
+        if (args.verbose) console.log(`Calling ${swarm_cli} ${cmdArgs.join(' ')}`);
+        await _spawn_io(swarm_cli, args = cmdArgs)
     } else {
-        await _spawn_io(swarm_cli, args = ["upload", dirName])
+        cmdArgs = ["upload", dirName].concat(cmdArgs)
+        if (args.verbose) console.log(`Calling ${swarm_cli} ${cmdArgs.join(' ')}`);
+        await _spawn_io(swarm_cli, args = cmdArgs)
     }
 
     return {}
 }
 
 async function cleanUp(args={}) {
-    let zimFileName = args.zimFileName
-    let dirName = getDirName(zimFileName)
+    if (args.cleanup) {
+        let zimFileName = args.zimFileName
+        let dirName = getDirName(zimFileName)
 
-    console.log(`Cleaning up ${zimFileName} and ${dirName}... `);
- 
-    //let cmd = `rm ${zimFileName}`
-    await _spawn_io("rm", [zimFileName])
-    await _spawn_io("rm", ['-rf', dirName])
+        if (args.verbose) console.log(`Cleaning up ${zimFileName} and ${dirName}... `);
     
+        //let cmd = `rm ${zimFileName}`
+        await _spawn_io("rm", [zimFileName])
+        await _spawn_io("rm", ['-rf', dirName])
+    }
+
     return {}
 }
 
-module.exports = {downloadZim, zimdump, prepIndexDoc, swarm, cleanUp}
+module.exports = {downloadZim, zimdump, prepIndexDoc: prepFiles, swarm, cleanUp}
