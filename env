@@ -1,0 +1,7 @@
+# Copy this file to .env, then update it with your own settings
+
+BEE_API_URL=
+BEE_DEBUG_API_URL=
+STAMP=
+IDENTITY=
+PASSWORD=
