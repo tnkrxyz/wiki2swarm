@@ -23,6 +23,13 @@ services:
       - "./test:/app/test"
     depends_on:
       - redis
+    environment:
+      - BEE_API_URL
+      - BEE_DEBUG_API_URL
+      - STAMP
+      - IDENTITY
+      - PASSWORD
+
 
 volumes:
   redis:

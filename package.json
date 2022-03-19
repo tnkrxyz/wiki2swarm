@@ -15,7 +15,7 @@
     "url": "git+https://github.com/tnkrxyz/wiki2swarm.git"
   },
   "author": "tnkrxyz",
-  "license": "GPL-3.0-or-later",
+  "license": "BSD-3-Clause",
   "bugs": {
     "url": "https://github.com/tnkrxyz/wiki2swarm/issues"
   },
