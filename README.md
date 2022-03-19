@@ -2,15 +2,15 @@
 
 ## Features
 - Support asynchronous job queue with [`bee-queue`]()
-- Utilize the [`swarm-cli` package]() for interactions with bee node
-- Command line arguments or a configure file your preference, your choice
+- Utilize [`swarm-cli`](https://github.com/ethersphere/swarm-cli) for interactions with bee node
+- Use command line arguments or directly interact with swarm-cli to select stamp, identity, and password
 
 ## Prerequisites
 - docker 
 - docker compose
 - A running Bee node (or set one up inside a docker container following step 3 below)
 
-## Instructions
+## Quick Start (using the public Swarm testing gateway)
 1. Clone this repo: `git clone https://github.com/tnkrxyz/wiki2swarm.git` and change path to the the wiki2swarm dirctory in your terminal
 2. Build the docker image with command `docker compose build app`
 3. (optional) Run a local Bee node with Bee Clef inside a container (Skip this step if you have a running bee node  already or use one of the swarm testing gateways)

@@ -5,7 +5,7 @@ services:
     image: redis:alpine
     restart: always
     ports:
-      - 127.0.0.1:6379:6379 #expose redis to connection from localhost only
+      - 127.0.0.1:6379:6379 #expose redis to connections from localhost only
     #command: 
     volumes: 
       - redis:/data
@@ -20,6 +20,7 @@ services:
     volumes:
       - "./src:/app/src"
       - "./data:/app/data"
+      - "./test:/app/test"
     depends_on:
       - redis
 

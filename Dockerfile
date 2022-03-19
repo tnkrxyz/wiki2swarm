@@ -35,5 +35,6 @@ RUN chown -R node:node /app
 
 USER node
 COPY --from=build /app/node_modules/ /app/node_modules/
+RUN ln -s /app/src/index.js /app/node_modules/.bin/wiki2swarm
 ENV PATH="/app/node_modules/.bin:$PATH"
 CMD ["sleep", "infinity"]

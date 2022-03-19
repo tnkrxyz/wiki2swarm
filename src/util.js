@@ -135,4 +135,4 @@ async function cleanUp(args={}) {
     return {}
 }
 
-module.exports = {downloadZim, zimdump, prepIndexDoc: prepFiles, swarm, cleanUp}
+module.exports = {downloadZim, zimdump, prepIndexDoc: prepFiles, swarm, cleanUp, _spawn_io}

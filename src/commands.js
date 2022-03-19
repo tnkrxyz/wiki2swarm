@@ -20,19 +20,15 @@ async function closeIdleQueue(queue, verbose=false) {
 }
 
 async function mirror(urls, args) {
-       
-    let url = urls[0]
-    let datadir = args.datadir
 
-    //let url = args.url
-    //let datadir = args.datadir
-    //let vv = jobSeq.map(async (fn) => {jobQueue.createJob({fn: fn, url: url, datadir: datadir}).save()})
-    //console.log(vv)
-
-    jobQueue.createJob({...args, ...{seqId: 0, url: url}}).save()
+    for (const url of urls) {
+        jobQueue.createJob({...args, ...{seqId: 0, url: url}}).save()
+    }
 
     jobQueue.process(async (job, done) => {
-        if (args.verbose) console.log(`Processing job ${job.id} with arguments:\n ${job.data}`);
+        if (args.verbose) console.log(`Processing job ${job.id} with arguments:`);
+        if (args.verbose) console.log(job.data)
+        
         let fn = jobSeq[job.data.seqId]
         let ret = fn(args=job.data)
 
@@ -68,16 +64,4 @@ async function mirror(urls, args) {
     });
 }
 
-async function feed(url, datadir="data/") {
-    console.log(`Mirroring/feeding ${url} to Swarm ... `);
-    let dl = await downloadZim({url: url, datadir: datadir})
-    await dl.start();
-
-    let zimFileName = dl.getDownloadPath();
-    await zimdump(zimFileName);
-    await processZim(zimFileName, datadir="data/")
-
-    await swarm(zimFileName, datadir="data/")
-}
-
-module.exports = {mirror, feed}
+module.exports = {mirror}

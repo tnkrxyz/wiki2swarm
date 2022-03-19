@@ -9,7 +9,7 @@ program
     .description('Mirror Wikipedia snapshot in zim format to Swarm')
     .argument('<url...>', 'zim url(s) to be mirrored to Swarm')
     .option('-d, --datadir', 'directory to store zim and temporary files"', 'data/')
-    .option('-f, --feed', 'Use "feed upload" instead of "upload"', false)
+    .option('-f, --feed', 'Use Swarm "feed upload" instead of "upload"', false)
     .option('-k, --keep-aux-files', 'keep auxillary files (jpg, media, tag, and search index)', false)
     .option('-c, --cleanup', 'Clean up downloaded and extracted files after uploading', true)
     .option('-v, --verbose', 'Print all console messages', false)
