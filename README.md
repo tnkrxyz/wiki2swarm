@@ -25,6 +25,10 @@
 
     - When finished uploading successfully, it will print the Swarm hash and URL. You can visit the wikipedia snapshot by visiting the URL to your browser.
 
+
+https://user-images.githubusercontent.com/97625120/159150413-79ad904f-a7da-4d22-8089-18c97bd3230f.mp4
+
+
 ## wiki2swarm options
 
 ```
@@ -54,6 +58,9 @@ Options:
 Swarm allows users to use feeds to upload/update files, so the Swarm hash (and thus URL) remains the same as files are updated, for which wikipedia snapshot is a good use case. `wiki2swarm` supports feed uploading of wikipedia snapshots. Using feeds requires creation & usage of an identity and password; swarm-cli also requires access to valid bee-debug-api and stamp. These information can be passed through command line arguments, environment variables (using a .env file or setting them in docker-compose.yml), selecting them interactively when prompted.
 
 To create an identity, use the command `docker compose exec app swarm-cli identity create`
+
+
+https://user-images.githubusercontent.com/97625120/159150418-dcc6d129-4a7a-493f-b20e-6439e48eb705.mp4
 
 
 ## References
