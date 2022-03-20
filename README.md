@@ -54,10 +54,41 @@ Options:
   -h, --help                 display help for command
 ```
 
-### "feed upload" vs "upload"
-Swarm allows users to use feeds to upload/update files, so the Swarm hash (and thus URL) remains the same as files are updated, for which wikipedia snapshot is a good use case. `wiki2swarm` supports feed uploading of wikipedia snapshots. Using feeds requires creation & usage of an identity and password; swarm-cli also requires access to valid bee-debug-api and stamp. These information can be passed through command line arguments, environment variables (using a .env file or setting them in docker-compose.yml), selecting them interactively when prompted.
+### url
+The urls of zim files to be mirrored to Swarm. Multiple urls can be passed to `wiki2swarm` in the same command line arguments, e.g.: 
+```
+wiki2swarm https://download.kiwix.org/zim/wikipedia/wikipedia_en_ray_charles_mini_2022-02.zim \
+           https://download.kiwix.org/zim/wikipedia/wikipedia_bm_all_maxi_2022-02.zim
+```
+`wiki2swarm` will process  multiple urls asynchronously when possible. Since `wiki2swarm` use bee-queue to manage job queue, sequential and parallel jobs can be handled accordingly.
 
-To create an identity, use the command `docker compose exec app swarm-cli identity create`
+### -f, --feed
+Whether to use swarm "feed upload". See more details of the difference in the "feed upload" vs "upload" section of this document below.
+
+### -k, --keep-aux-files
+Wikipedia snapshot in zim format including auxillary files like multimedia files (jpg, webm), meta data, and search index. Add this flag to include these files in the upload.
+
+### -c, --cleanup
+Wheter to clean up downloaded and extracted files after uploading.
+
+### -v, --verbose
+When enabled, print all console messages (useful for debugging).
+
+### swarm-cli options
+These are wiki2swarm command line options that are passed to `swarm-cli`:
+- `--bee-api-url <url>`
+- `--bee-debug-api-url <url>`
+- `--stamp <stamp>`
+- `--identity <identity>`
+- `--password <password>`
+
+They can also be set using corresponding environment variables in the .env file or in docker-compose.yml.
+
+
+### "feed upload" vs "upload"
+Swarm allows users to use feeds to upload/update files, so the Swarm hash (and thus URL) remains the same as files are updated, for which wikipedia snapshot is a good use case. `wiki2swarm` supports feed uploading of wikipedia snapshots. `wiki2swarm` supports feed upload by passing the `--feed` option.
+
+Using feeds requires creation & usage of an identity and password; swarm-cli also requires access to valid bee-debug-api and stamp. These information can be passed through command line arguments, environment variables (using a .env file or setting them in docker-compose.yml), selecting them interactively when prompted. (To create an identity, use the command `docker compose exec app swarm-cli identity create`)
 
 
 https://user-images.githubusercontent.com/97625120/159150418-dcc6d129-4a7a-493f-b20e-6439e48eb705.mp4
@@ -67,8 +98,3 @@ https://user-images.githubusercontent.com/97625120/159150418-dcc6d129-4a7a-493f-
 - [Sarm Document](https://docs.ethswarm.org/docs/)
 - [swarm-cli](https://github.com/ethersphere/swarm-cli)
 - [Bee node](https://github.com/ethersphere/bee)
-
-
-
-and if you have enough stamp postage for file uploading
-    - If your Bee node is not on localhost or using the default ports (1633 and 1635) pass this  argument: `--bee-api-url http://ip-of-your-bee-node:port1`. For example, to use the Swarm public testing gateway, `--bee-api-url https://gateway-proxy-bee-0-0.gateway.ethswarm.org` 
