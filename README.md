@@ -86,9 +86,9 @@ They can also be set using corresponding environment variables in the .env file 
 
 
 ### "feed upload" vs "upload"
-Swarm allows users to use feeds to upload/update files, so the Swarm hash (and thus URL) remains the same as files are updated, for which wikipedia snapshot is a good use case. `wiki2swarm` supports feed uploading of wikipedia snapshots. `wiki2swarm` supports feed upload by passing the `--feed` option.
+Swarm allows users to use feeds to upload/update files, so the Swarm hash (and thus URL) remains the same as files are updated, for which wikipedia snapshot is a good use case. `wiki2swarm` supports feed uploading of wikipedia snapshots by passing the `--feed` option.
 
-Using feeds requires creation & usage of an identity and password; swarm-cli also requires access to valid bee-debug-api and stamp. These information can be passed through command line arguments, environment variables (using a .env file or setting them in docker-compose.yml), selecting them interactively when prompted. (To create an identity, use the command `docker compose exec app swarm-cli identity create`)
+Using feeds requires creation & usage of an identity and password; swarm-cli also requires access to valid bee-debug-api and stamp. These information can be passed through command line arguments, environment variables (using a .env file or setting them in docker-compose.yml), or selecting them interactively when prompted. (To create an identity, use the command `docker compose exec app swarm-cli identity create`)
 
 
 https://user-images.githubusercontent.com/97625120/159150418-dcc6d129-4a7a-493f-b20e-6439e48eb705.mp4
