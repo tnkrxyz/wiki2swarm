@@ -8,7 +8,7 @@
 ## Prerequisites
 - [docker](https://docs.docker.com/engine/install/) 
 - [docker compose](https://docs.docker.com/compose/install/)
-- A running Bee node (or set one up inside a docker container following [these steps](https://github.com/tnkrxyz/wiki2swarm/beenode) )
+- A running Bee node (or set one up inside a docker container following [these steps](https://github.com/tnkrxyz/wiki2swarm/tree/master/beenode) )
 
 ## Quick Start (using the public Swarm testing gateway)
 1. Clone this repo: `git clone https://github.com/tnkrxyz/wiki2swarm.git` and change path to the the wiki2swarm dirctory in your terminal
